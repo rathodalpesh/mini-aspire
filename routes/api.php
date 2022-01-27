@@ -20,15 +20,18 @@ use App\Http\Controllers\API\AdminLoanController;
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
+//user Route
 Route::group(['middleware' => ['auth:api', 'user_accessible']], function () {
+    Route::post('next-loan-payments', [LoanController::class, 'nextLoanPayments']);
+    Route::post('pay-loan-payments', [LoanController::class, 'payLoanPayments']);
     Route::apiResource('loan', LoanController::class, ['except' => ['create','edit','update','destroy']]);
 });
 
+//admin route
 Route::group(['middleware' => ['auth:api', 'admin_accessible']], function () {
     Route::get('admin-loan', [AdminLoanController::class, 'index']);
     Route::post('admin-loan/approval-loan', [AdminLoanController::class, 'approvalLoan']);
     Route::delete('admin-loan/delete/{id}', [AdminLoanController::class, 'destroy']);
-    //Route::apiResource('/admin-loan', AdminLoanController::class, ['except' => ['create','store', 'destroy']]);
 });
 
 

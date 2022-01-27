@@ -9,6 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\LoanResource;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * [Admin AdminLoanController]
+ */
 class AdminLoanController extends Controller
 {
     /**
@@ -23,10 +26,9 @@ class AdminLoanController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @param Request $request
      *
-     * @param  \App\CEO  $ceo
-     * @return \Illuminate\Http\Response
+     * @return response
      */
     public function approvalLoan( Request $request )
     {
@@ -84,11 +86,9 @@ class AdminLoanController extends Controller
 
 
     /**
-     * Remove the specified resource from storage.
+     * @param mixed $id
      *
-     * @param \App\CEO $ceo
-     * @return \Illuminate\Http\Response
-     * @throws \Exception
+     * @return response
      */
     public function destroy( $id)
     {

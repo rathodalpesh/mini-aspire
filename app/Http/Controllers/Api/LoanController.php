@@ -3,18 +3,21 @@
 namespace App\Http\Controllers\API;
 
 use App\Models\Loan;
+use Illuminate\Http\Request;
+use App\Models\LoanHistories;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LoanResource;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * [user LoanController]
+ */
 class LoanController extends Controller
 {
+
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @return response
      */
     public function index()
     {
@@ -43,10 +46,6 @@ class LoanController extends Controller
             return response(['error' => $validator->errors(), 'Validation Error']);
         }
 
-      /*   $amount = $data['amount'];
-        $rate = .( $data['interest'] ) / 52; // Weekly interest rate
-        $term = $data['loan_term']; // Term in weeks
-        $emi = $amount * $rate * (pow(1 + $rate, $term) / (pow(1 + $rate, $term) - 1)); */
         $data['user_id'] = Auth::user()->id;
         $data['status'] = 0;
         $loan = Loan::create($data);
@@ -55,14 +54,65 @@ class LoanController extends Controller
 
 
     /**
-     * Display the specified resource.
+     * @param mixed $id
      *
-     * @param  \App\CEO  $ceo
-     * @return \Illuminate\Http\Response
+     * @return response
      */
-    public function show(Loan $loan)
+    public function show($id)
     {
+        $loan = Loan::whereUserId(Auth::user()->id)->find($id);
         return response(['loan' => new LoanResource($loan), 'message' => 'Retrieved successfully'], 200);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return response
+     */
+    public function nextLoanPayments(Request $request)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'loan_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['error' => $validator->errors(), 'Validation Error']);
+        }
+
+        $loan = Loan::whereUserId(Auth::user()->id)->find($request->loan_id);
+        if (is_null($loan)) {
+            return response(['loan' => new LoanResource($loan), 'message' => 'No Loan Found.'], 200);
+        }
+
+        $Loan_historie = LoanHistories::whereLoanId($request->loan_id)->wherePaidDate(null)
+                                        ->orderBy('loan_term','ASC')
+                                        ->first();
+
+        return response(['Loan Histories' => new LoanResource($Loan_historie), 'message' => 'Retrieved successfully'], 200);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return response
+     */
+    public function payLoanPayments(Request $request)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'loan_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['error' => $validator->errors(), 'Validation Error']);
+        }
+
+        $Loan_historie = LoanHistories::whereLoanId($request->loan_id)->wherePaidDate(null)->orderBy('loan_term', 'ASC')->first();
+        if( !empty($Loan_historie) ){
+            $Loan_historie->paid_date = date('Y-m-d');
+            $Loan_historie->save();
+        }
+        return response(['Loan Histories' => new LoanResource($Loan_historie), 'message' => 'Retrieved successfully'], 200);
+    }
 }
